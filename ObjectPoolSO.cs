@@ -6,7 +6,7 @@ using Tags = AoOkami.MultipleTagSystem.TagSystem.Tags;
 namespace AoOkami.ObjectPool
 {
     [CreateAssetMenu(fileName = "ObjectPool", menuName = "ScriptableObjects/ObjectPool")]
-    public class ObjectPool : ScriptableObject
+    public class ObjectPoolSO : ScriptableObject
     {
         [System.Serializable]
         public struct Pool
@@ -41,6 +41,8 @@ namespace AoOkami.ObjectPool
             }
         }
 
+        public bool IsTagInDictionary(Tags tag) => poolDictionary.ContainsKey(tag);
+
         public void AddToPool(GameObject instance)
         {
             if (instance.TryGetComponent(out PooledObject pooledObject))
@@ -59,26 +61,11 @@ namespace AoOkami.ObjectPool
 
         public GameObject GetFromPool(Tags tag)
         {
-            if (!poolDictionary.ContainsKey(tag))
-            {
-                return null;
-            }
-            else if (poolDictionary[tag].Count < 1)
-            {
-                GameObject desiredPrefab = pools.Find(p => p.tag == tag).prefab;
-                GameObject desiredObject = Instantiate(desiredPrefab);
+            if (!poolDictionary.ContainsKey(tag)) return null;
 
-                return desiredObject;
-            }
-            else
-            {
-                Queue<GameObject> pool = poolDictionary[tag];
-                GameObject objectToSpawn = pool.Dequeue();
+            else if (poolDictionary[tag].Count < 1) return InstantiateNewPrefab(tag);
 
-                objectToSpawn.SetActive(true);
-
-                return objectToSpawn;
-            }
+            else return GetObjectToSpawn(tag);
         }
 
         public GameObject GetFromPool(Tags tag, Vector3 position)
@@ -89,19 +76,15 @@ namespace AoOkami.ObjectPool
             }
             else if (poolDictionary[tag].Count < 1)
             {
-                GameObject desiredPrefab = pools.Find(p => p.tag == tag).prefab;
-                GameObject desiredObject = Instantiate(desiredPrefab);
-                desiredObject.transform.position = position;
+                GameObject newInstance = InstantiateNewPrefab(tag);
+                newInstance.transform.position = position;
 
-                return desiredObject;
+                return newInstance;
             }
             else
             {
-                Queue<GameObject> pool = poolDictionary[tag];
-                GameObject objectToSpawn = pool.Dequeue();
-
+                GameObject objectToSpawn = GetObjectToSpawn(tag);
                 objectToSpawn.transform.position = position;
-                objectToSpawn.SetActive(true);
 
                 return objectToSpawn;
             }
@@ -115,24 +98,35 @@ namespace AoOkami.ObjectPool
             }
             else if (poolDictionary[tag].Count < 1)
             {
-                GameObject desiredPrefab = pools.Find(p => p.tag == tag).prefab;
-                GameObject desiredObject = Instantiate(desiredPrefab);
-                desiredObject.transform.SetPositionAndRotation(position, rotation);
+                GameObject newInstance = InstantiateNewPrefab(tag);
+                newInstance.transform.SetPositionAndRotation(position, rotation);
 
-                return desiredObject;
+                return newInstance;
             }
             else
             {
-                Queue<GameObject> pool = poolDictionary[tag];
-                GameObject objectToSpawn = pool.Dequeue();
-
+                GameObject objectToSpawn = GetObjectToSpawn(tag);
                 objectToSpawn.transform.SetPositionAndRotation(position, rotation);
-                objectToSpawn.SetActive(true);
 
                 return objectToSpawn;
             }
         }
 
-        public bool IsTagInDictionary(Tags tag) => poolDictionary.ContainsKey(tag);
+        private GameObject InstantiateNewPrefab(Tags tag)
+        {
+            GameObject desiredPrefab = pools.Find(p => p.tag == tag).prefab;
+            GameObject desiredObject = Instantiate(desiredPrefab);
+
+            return desiredObject;
+        }
+
+        private GameObject GetObjectToSpawn(Tags tag)
+        {
+            Queue<GameObject> pool = poolDictionary[tag];
+            GameObject objectToSpawn = pool.Dequeue();
+            objectToSpawn.SetActive(true);
+
+            return objectToSpawn;
+        }
     }
 }
