@@ -41,16 +41,6 @@ namespace AoOkami.ObjectPool
             }
         }
 
-        public void AddToPool(Tags tag, GameObject instance)
-        {
-            if (!poolDictionary.ContainsKey(tag)) return;
-
-            Queue<GameObject> pool = poolDictionary[tag];
-
-            instance.SetActive(false);
-            pool.Enqueue(instance);
-        }
-
         public void AddToPool(GameObject instance)
         {
             if (instance.TryGetComponent(out PooledObject pooledObject))
