@@ -1,14 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Tags = AoOkami.MultipleTagSystem.TagSystem.Tags;
 
 namespace AoOkami.ObjectPool
 {
     public class PooledObject : MonoBehaviour
     {
-        public Tags PoolTag { get; private set; }
+        public PoolTags PoolTag { get; private set; }
 
-        public void SetPoolTag(Tags tag) => PoolTag = tag;
+        public void SetPoolTag(PoolTags tag) => PoolTag = tag;
     }
 }

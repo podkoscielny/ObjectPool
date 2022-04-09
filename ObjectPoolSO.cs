@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Tags = AoOkami.MultipleTagSystem.TagSystem.Tags;
 
 namespace AoOkami.ObjectPool
 {
@@ -11,19 +10,19 @@ namespace AoOkami.ObjectPool
         [System.Serializable]
         public struct Pool
         {
-            public Tags tag;
+            public PoolTags tag;
             public GameObject prefab;
             public int size;
         }
 
         [SerializeField] List<Pool> pools;
-        [SerializeField] Dictionary<Tags, Queue<GameObject>> poolDictionary;
+        [SerializeField] Dictionary<PoolTags, Queue<GameObject>> poolDictionary;
 
-        private void OnDisable() => poolDictionary = new Dictionary<Tags, Queue<GameObject>>();
+        private void OnDisable() => InitializePoolDictionary();
 
         public void InitializePool()
         {
-            poolDictionary = new Dictionary<Tags, Queue<GameObject>>();
+            InitializePoolDictionary();
 
             foreach (Pool pool in pools)
             {
@@ -31,23 +30,23 @@ namespace AoOkami.ObjectPool
 
                 for (int i = 0; i < pool.size; i++)
                 {
-                    GameObject obj = Instantiate(pool.prefab);
-                    obj.AddComponent<PooledObject>().SetPoolTag(pool.tag);
-                    obj.SetActive(false);
-                    objectPool.Enqueue(obj);
+                    GameObject instance = Instantiate(pool.prefab);
+                    instance.AddComponent<PooledObject>().SetPoolTag(pool.tag);
+                    instance.SetActive(false);
+                    objectPool.Enqueue(instance);
                 }
 
                 poolDictionary.Add(pool.tag, objectPool);
             }
         }
 
-        public bool IsTagInDictionary(Tags tag) => poolDictionary.ContainsKey(tag);
+        public bool IsTagInDictionary(PoolTags tag) => poolDictionary.ContainsKey(tag);
 
         public void AddToPool(GameObject instance)
         {
             if (instance.TryGetComponent(out PooledObject pooledObject))
             {
-                Tags pooledTag = pooledObject.PoolTag;
+                PoolTags pooledTag = pooledObject.PoolTag;
 
                 if (!poolDictionary.ContainsKey(pooledTag)) return;
 
@@ -59,7 +58,7 @@ namespace AoOkami.ObjectPool
             }
         }
 
-        public GameObject GetFromPool(Tags tag)
+        public GameObject GetFromPool(PoolTags tag)
         {
             if (!poolDictionary.ContainsKey(tag)) return null;
 
@@ -68,7 +67,7 @@ namespace AoOkami.ObjectPool
             else return GetObjectToSpawn(tag);
         }
 
-        public GameObject GetFromPool(Tags tag, Vector3 position)
+        public GameObject GetFromPool(PoolTags tag, Vector3 position)
         {
             if (!poolDictionary.ContainsKey(tag))
             {
@@ -90,7 +89,7 @@ namespace AoOkami.ObjectPool
             }
         }
 
-        public GameObject GetFromPool(Tags tag, Vector3 position, Quaternion rotation)
+        public GameObject GetFromPool(PoolTags tag, Vector3 position, Quaternion rotation)
         {
             if (!poolDictionary.ContainsKey(tag))
             {
@@ -112,7 +111,7 @@ namespace AoOkami.ObjectPool
             }
         }
 
-        private GameObject InstantiateNewPrefab(Tags tag)
+        private GameObject InstantiateNewPrefab(PoolTags tag)
         {
             GameObject desiredPrefab = pools.Find(p => p.tag == tag).prefab;
             GameObject desiredObject = Instantiate(desiredPrefab);
@@ -120,7 +119,7 @@ namespace AoOkami.ObjectPool
             return desiredObject;
         }
 
-        private GameObject GetObjectToSpawn(Tags tag)
+        private GameObject GetObjectToSpawn(PoolTags tag)
         {
             Queue<GameObject> pool = poolDictionary[tag];
             GameObject objectToSpawn = pool.Dequeue();
@@ -128,5 +127,7 @@ namespace AoOkami.ObjectPool
 
             return objectToSpawn;
         }
+
+        private void InitializePoolDictionary() => poolDictionary = new Dictionary<PoolTags, Queue<GameObject>>();
     }
 }
